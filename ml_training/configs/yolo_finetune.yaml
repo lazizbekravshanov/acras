@@ -1,0 +1,27 @@
+# YOLOv8 fine-tuning configuration for traffic incident detection
+# Usage: yolo train model=yolov8s.pt data=this_config.yaml epochs=100
+
+path: ../data/processed/yolo  # dataset root
+train: images/train
+val: images/val
+test: images/test
+
+# Classes relevant to traffic incident detection
+names:
+  0: car
+  1: truck
+  2: bus
+  3: motorcycle
+  4: person
+  5: bicycle
+  6: traffic_cone
+  7: debris
+  8: fire
+  9: smoke
+
+# Training parameters
+# yolo train model=yolov8s.pt data=yolo_finetune.yaml \
+#   epochs=100 batch=16 imgsz=640 \
+#   lr0=0.001 lrf=0.01 \
+#   augment=True mixup=0.1 \
+#   patience=20 save_period=10

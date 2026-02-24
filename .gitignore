@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Environment
+.env
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+data/sample_videos/*.mp4
+data/sample_videos/*.avi
+ml_training/data/raw/
+ml_training/data/processed/
+
+# Models
+backend/app/ml/models/*.pt
+backend/app/ml/models/*.onnx
+!backend/app/ml/models/.gitkeep
+
+# Docker volumes
+postgres_data/
+grafana_data/
+
+# Logs
+*.log
+
+# Coverage
+.coverage
+htmlcov/
