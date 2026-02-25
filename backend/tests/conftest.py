@@ -3,15 +3,12 @@
 import asyncio
 import uuid
 from collections.abc import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import Settings
 from app.main import create_app
 
 

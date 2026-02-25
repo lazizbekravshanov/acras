@@ -5,7 +5,7 @@ Generates comprehensive crash reports from incident data.
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
@@ -21,7 +21,7 @@ class ReportGenerator:
 
     def generate_structured_report(self, incident: dict, weather: dict | None = None) -> dict:
         """Generate a structured JSON report for an incident."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         severity_to_response = {
             "minor": "police",

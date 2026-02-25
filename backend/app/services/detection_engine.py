@@ -3,14 +3,17 @@
 Subscribes to Redis frame channels, runs inference, and produces detection results.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from dataclasses import dataclass
-
-import cv2
-import numpy as np
+from typing import TYPE_CHECKING
 
 from app.config import settings
+
+if TYPE_CHECKING:
+    import numpy as np
 
 logger = logging.getLogger(__name__)
 

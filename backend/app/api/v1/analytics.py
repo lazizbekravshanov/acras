@@ -1,6 +1,6 @@
 """Analytics endpoints — heatmaps, trends, predictions, summaries."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -24,7 +24,7 @@ router = APIRouter()
 @router.get("/summary", response_model=SummaryResponse)
 async def get_summary(db: AsyncSession = Depends(get_db)):
     """Get dashboard summary metrics."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
 
@@ -68,7 +68,7 @@ async def get_heatmap(
     severity: str | None = None,
 ):
     """Get crash heatmap data for geographic visualization."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if not start_date:
         start_date = now - timedelta(days=30)
     if not end_date:
@@ -119,7 +119,7 @@ async def get_trends(
     days: int = Query(30, ge=1, le=365),
 ):
     """Get incident trend data for time-series charts."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     start = now - timedelta(days=days)
 
     if period == "hourly":
@@ -155,7 +155,7 @@ async def get_risk_score(
     lon: float = Query(..., ge=-180, le=180),
 ):
     """Get risk assessment for a specific location based on historical data."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     thirty_days_ago = now - timedelta(days=30)
 
     # Count incidents within ~1 mile radius (~0.015 degrees) in last 30 days

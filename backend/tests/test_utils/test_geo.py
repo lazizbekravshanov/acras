@@ -1,8 +1,7 @@
 """Tests for geospatial utilities."""
 
-import pytest
 
-from app.utils.geo import haversine_distance_miles, approx_distance_miles, validate_coordinates
+from app.utils.geo import approx_distance_miles, haversine_distance_miles, validate_coordinates
 
 
 def test_haversine_same_point():

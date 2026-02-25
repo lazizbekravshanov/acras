@@ -4,10 +4,9 @@ Routes alerts based on alert configurations and handles retries.
 """
 
 import asyncio
-import json
 import logging
 import smtplib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -64,8 +63,8 @@ class AlertDispatcher:
                 raise ValueError(f"Unknown channel: {channel}")
 
             result["status"] = "sent"
-            result["sent_at"] = datetime.now(timezone.utc).isoformat()
-            self._last_sent[recipient] = datetime.now(timezone.utc)
+            result["sent_at"] = datetime.now(UTC).isoformat()
+            self._last_sent[recipient] = datetime.now(UTC)
             logger.info("Alert sent via %s to %s for incident %s", channel, recipient, incident["id"])
 
         except Exception as e:
@@ -98,7 +97,7 @@ class AlertDispatcher:
         last = self._last_sent.get(recipient)
         if last:
             cooldown = config.get("cooldown_minutes", 5)
-            elapsed = (datetime.now(timezone.utc) - last).total_seconds() / 60
+            elapsed = (datetime.now(UTC) - last).total_seconds() / 60
             if elapsed < cooldown:
                 return False
 
@@ -144,7 +143,10 @@ class AlertDispatcher:
             return
 
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"[ACRAS] {incident.get('severity', '').upper()} {incident.get('incident_type', 'incident')} on {incident.get('interstate', 'unknown')}"
+        severity = incident.get('severity', '').upper()
+        inc_type = incident.get('incident_type', 'incident')
+        road = incident.get('interstate', 'unknown')
+        msg["Subject"] = f"[ACRAS] {severity} {inc_type} on {road}"
         msg["From"] = settings.SMTP_USER
         msg["To"] = recipient
 

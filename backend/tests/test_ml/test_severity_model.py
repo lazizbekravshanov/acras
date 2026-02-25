@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.ml.severity_model import SeverityInput, SeverityModel, SeverityOutput
+from app.ml.severity_model import SeverityInput, SeverityModel
 
 
 @pytest.fixture

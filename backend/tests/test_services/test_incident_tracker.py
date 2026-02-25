@@ -1,10 +1,10 @@
 """Tests for the incident tracking service."""
 
-import pytest
-from datetime import datetime, timezone
 
-from app.services.incident_tracker import IncidentTracker, TrackedIncident
+import pytest
+
 from app.services.detection_engine import DetectionResult
+from app.services.incident_tracker import IncidentTracker
 
 
 @pytest.fixture

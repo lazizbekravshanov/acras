@@ -5,8 +5,8 @@ Manages the lifecycle of detected incidents from initial detection through resol
 
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 
 from app.services.detection_engine import DetectionResult
 
@@ -47,10 +47,10 @@ class TrackedIncident:
     interstate: str = ""
     direction: str | None = None
     vehicle_count: int = 0
-    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     confirmed_at: datetime | None = None
     resolved_at: datetime | None = None
-    last_update: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_update: datetime = field(default_factory=lambda: datetime.now(UTC))
     # Rolling window of detection confidences
     confidence_history: list[float] = field(default_factory=list)
     consecutive_detections: int = 0
@@ -76,7 +76,7 @@ class IncidentTracker:
         camera_direction: str | None = None,
     ) -> TrackedIncident | None:
         """Process a detection result. Returns a new or updated incident, or None."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if result.is_incident and result.incident_type:
             # Check for existing incident (deduplication)
@@ -224,7 +224,7 @@ class IncidentTracker:
 
     def check_auto_resolve(self) -> list[TrackedIncident]:
         """Check for incidents that should be auto-resolved. Call periodically."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resolved = []
 
         for incident in list(self._active.values()):

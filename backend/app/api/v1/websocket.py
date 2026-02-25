@@ -1,6 +1,5 @@
 """WebSocket endpoint for real-time incident updates."""
 
-import asyncio
 import json
 import logging
 

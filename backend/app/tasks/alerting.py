@@ -11,11 +11,7 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="app.tasks.alerting.dispatch_alerts")
 def dispatch_alerts(incident_data: dict, report_summary: str | None = None) -> list[dict]:
     """Dispatch alerts for an incident to all matching configurations."""
-    from app.services.alert_dispatcher import AlertDispatcher
-
-    dispatcher = AlertDispatcher()
-
-    # In a real implementation, we'd fetch active AlertConfigs from the DB
+    # In a real implementation, we'd import AlertDispatcher and fetch active AlertConfigs from the DB
     # For now, this demonstrates the pattern
     results = []
     logger.info("Alert dispatch triggered for incident %s", incident_data.get("id"))

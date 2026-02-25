@@ -5,13 +5,11 @@ Publishes extracted frames to Redis pub/sub for the detection pipeline.
 """
 
 import asyncio
-import io
 import logging
 import time
 from dataclasses import dataclass, field
 
 import cv2
-import numpy as np
 import redis.asyncio as aioredis
 
 from app.config import settings

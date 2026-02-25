@@ -28,7 +28,8 @@ def configure_logging() -> None:
             wrapper_class=structlog.make_filtering_bound_logger(log_level),
         )
     else:
-        logging.basicConfig(level=log_level, stream=sys.stdout, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+        log_fmt = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+        logging.basicConfig(level=log_level, stream=sys.stdout, format=log_fmt)
 
 
 def create_app() -> FastAPI:

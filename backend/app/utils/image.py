@@ -24,10 +24,10 @@ def denoise_frame(frame: np.ndarray) -> np.ndarray:
 def normalize_brightness(frame: np.ndarray) -> np.ndarray:
     """Normalize brightness using CLAHE (Contrast Limited Adaptive Histogram Equalization)."""
     lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
+    lum, a, b = cv2.split(lab)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    l = clahe.apply(l)
-    lab = cv2.merge([l, a, b])
+    lum = clahe.apply(lum)
+    lab = cv2.merge([lum, a, b])
     return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
 

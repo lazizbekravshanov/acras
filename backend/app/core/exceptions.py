@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 
-class ACRASException(Exception):
+class ACRASError(Exception):
     """Base exception for ACRAS."""
 
     def __init__(self, message: str, status_code: int = 500):
@@ -13,22 +13,22 @@ class ACRASException(Exception):
         super().__init__(message)
 
 
-class CameraNotFoundError(ACRASException):
+class CameraNotFoundError(ACRASError):
     def __init__(self, camera_id: str):
         super().__init__(f"Camera {camera_id} not found", status_code=404)
 
 
-class IncidentNotFoundError(ACRASException):
+class IncidentNotFoundError(ACRASError):
     def __init__(self, incident_id: str):
         super().__init__(f"Incident {incident_id} not found", status_code=404)
 
 
-class StreamConnectionError(ACRASException):
+class StreamConnectionError(ACRASError):
     def __init__(self, camera_id: str, reason: str):
         super().__init__(f"Failed to connect to camera {camera_id}: {reason}", status_code=502)
 
 
-class DetectionError(ACRASException):
+class DetectionError(ACRASError):
     def __init__(self, message: str):
         super().__init__(f"Detection pipeline error: {message}", status_code=500)
 
@@ -36,8 +36,8 @@ class DetectionError(ACRASException):
 def register_exception_handlers(app: FastAPI) -> None:
     """Register custom exception handlers with the FastAPI app."""
 
-    @app.exception_handler(ACRASException)
-    async def acras_exception_handler(request: Request, exc: ACRASException) -> JSONResponse:
+    @app.exception_handler(ACRASError)
+    async def acras_exception_handler(request: Request, exc: ACRASError) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": exc.message},

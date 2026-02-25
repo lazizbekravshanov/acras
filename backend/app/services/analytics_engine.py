@@ -4,7 +4,7 @@ Provides heatmap data, temporal patterns, severity trends, and risk scoring.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ class AnalyticsEngine:
 
     async def get_summary_stats(self, db: AsyncSession) -> dict:
         """Get high-level summary statistics for the dashboard."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_ago = now - timedelta(days=7)
         month_ago = now - timedelta(days=30)
@@ -67,7 +67,7 @@ class AnalyticsEngine:
 
     async def get_hourly_pattern(self, db: AsyncSession, days: int = 30) -> list[dict]:
         """Get incident count by hour of day for the last N days."""
-        start = datetime.now(timezone.utc) - timedelta(days=days)
+        start = datetime.now(UTC) - timedelta(days=days)
 
         result = await db.execute(
             select(
@@ -83,7 +83,7 @@ class AnalyticsEngine:
 
     async def get_severity_distribution(self, db: AsyncSession, days: int = 30) -> dict[str, int]:
         """Get severity breakdown for the last N days."""
-        start = datetime.now(timezone.utc) - timedelta(days=days)
+        start = datetime.now(UTC) - timedelta(days=days)
 
         result = await db.execute(
             select(Incident.severity, func.count(Incident.id).label("count"))
@@ -95,7 +95,7 @@ class AnalyticsEngine:
 
     async def get_top_locations(self, db: AsyncSession, limit: int = 10) -> list[dict]:
         """Get top incident locations ranked by frequency."""
-        start = datetime.now(timezone.utc) - timedelta(days=30)
+        start = datetime.now(UTC) - timedelta(days=30)
 
         result = await db.execute(
             select(

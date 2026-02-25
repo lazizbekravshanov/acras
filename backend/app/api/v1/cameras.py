@@ -123,9 +123,6 @@ async def update_camera(camera_id: uuid.UUID, data: CameraUpdate, db: AsyncSessi
         raise HTTPException(status_code=404, detail="Camera not found")
 
     update_data = data.model_dump(exclude_unset=True)
-    if "latitude" in update_data or "longitude" in update_data:
-        lat = update_data.get("latitude", camera.latitude)
-        lon = update_data.get("longitude", camera.longitude)
 
     if "metadata" in update_data:
         update_data["metadata_"] = update_data.pop("metadata")
