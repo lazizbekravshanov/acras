@@ -62,6 +62,22 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
+    @property
+    def async_database_url(self) -> str:
+        """Return an asyncpg-compatible DATABASE_URL."""
+        url = self.DATABASE_URL
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
+    @property
+    def sync_database_url(self) -> str:
+        """Return a psycopg2-compatible DATABASE_URL."""
+        url = self.DATABASE_SYNC_URL or self.DATABASE_URL
+        if "+asyncpg" in url:
+            url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+        return url
+
     model_config = {"env_file": str(_env_file), "env_file_encoding": "utf-8"}
 
 

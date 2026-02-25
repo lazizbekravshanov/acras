@@ -21,8 +21,10 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Override URL from environment
-db_url = os.environ.get("DATABASE_SYNC_URL", config.get_main_option("sqlalchemy.url"))
+# Override URL from environment — prefer DATABASE_SYNC_URL, fall back to DATABASE_URL
+_raw = os.environ.get("DATABASE_SYNC_URL") or os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+# Ensure we use sync driver for alembic
+db_url = _raw.replace("postgresql+asyncpg://", "postgresql://", 1) if _raw else _raw
 
 
 def run_migrations_offline() -> None:

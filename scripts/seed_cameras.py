@@ -40,10 +40,9 @@ async def seed():
             try:
                 await conn.execute(
                     """
-                    INSERT INTO cameras (name, stream_url, stream_type, location, latitude, longitude,
+                    INSERT INTO cameras (name, stream_url, stream_type, latitude, longitude,
                                         state_code, interstate, direction, mile_marker, source_agency, metadata)
-                    VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($5, $4), 4326)::geography,
-                            $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
                     """,
                     cam["name"],
                     cam["stream_url"],

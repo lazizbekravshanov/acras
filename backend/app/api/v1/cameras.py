@@ -3,7 +3,6 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from geoalchemy2.elements import WKTElement
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -102,7 +101,6 @@ async def create_camera(data: CameraCreate, db: AsyncSession = Depends(get_db)):
         stream_type=data.stream_type,
         latitude=data.latitude,
         longitude=data.longitude,
-        location=WKTElement(f"POINT({data.longitude} {data.latitude})", srid=4326),
         state_code=data.state_code.upper(),
         interstate=data.interstate,
         direction=data.direction,
@@ -128,7 +126,6 @@ async def update_camera(camera_id: uuid.UUID, data: CameraUpdate, db: AsyncSessi
     if "latitude" in update_data or "longitude" in update_data:
         lat = update_data.get("latitude", camera.latitude)
         lon = update_data.get("longitude", camera.longitude)
-        camera.location = WKTElement(f"POINT({lon} {lat})", srid=4326)
 
     if "metadata" in update_data:
         update_data["metadata_"] = update_data.pop("metadata")
@@ -166,7 +163,6 @@ async def bulk_import_cameras(data: CameraBulkImport, db: AsyncSession = Depends
                 stream_type=cam_data.stream_type,
                 latitude=cam_data.latitude,
                 longitude=cam_data.longitude,
-                location=WKTElement(f"POINT({cam_data.longitude} {cam_data.latitude})", srid=4326),
                 state_code=cam_data.state_code.upper(),
                 interstate=cam_data.interstate,
                 direction=cam_data.direction,

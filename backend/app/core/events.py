@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     logger.info("Starting ACRAS backend...")
 
-    engine = create_async_engine(settings.DATABASE_URL, echo=False, pool_size=20, max_overflow=10)
+    engine = create_async_engine(settings.async_database_url, echo=False, pool_size=20, max_overflow=10)
     async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)

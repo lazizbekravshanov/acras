@@ -3,7 +3,6 @@
 import uuid
 from datetime import datetime
 
-from geoalchemy2 import Geography
 from sqlalchemy import BigInteger, DateTime, Double, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -20,7 +19,6 @@ class Camera(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text)
     stream_url: Mapped[str] = mapped_column(Text, nullable=False)
     stream_type: Mapped[str] = mapped_column(String(20), nullable=False)  # rtsp, mjpeg, hls, http_image
-    location: Mapped[str] = mapped_column(Geography("POINT", srid=4326), nullable=False)
     latitude: Mapped[float] = mapped_column(Double, nullable=False)
     longitude: Mapped[float] = mapped_column(Double, nullable=False)
     state_code: Mapped[str] = mapped_column(String(2), nullable=False)
@@ -40,7 +38,6 @@ class Camera(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     health_logs = relationship("CameraHealthLog", back_populates="camera", lazy="noload")
 
     __table_args__ = (
-        Index("idx_cameras_location", "location", postgresql_using="gist"),
         Index("idx_cameras_status", "status"),
         Index("idx_cameras_interstate", "interstate"),
     )

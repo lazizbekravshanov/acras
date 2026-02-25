@@ -3,7 +3,6 @@
 import uuid
 from datetime import datetime
 
-from geoalchemy2 import Geography
 from sqlalchemy import DateTime, Double, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,7 +25,6 @@ class Incident(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     severity_score: Mapped[float] = mapped_column(Double, nullable=False)
     confidence: Mapped[float] = mapped_column(Double, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="detected")
-    location: Mapped[str] = mapped_column(Geography("POINT", srid=4326), nullable=False)
     latitude: Mapped[float] = mapped_column(Double, nullable=False)
     longitude: Mapped[float] = mapped_column(Double, nullable=False)
     interstate: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -53,6 +51,5 @@ class Incident(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("idx_incidents_status", "status"),
         Index("idx_incidents_severity", "severity"),
         Index("idx_incidents_detected_at", "detected_at"),
-        Index("idx_incidents_location", "location", postgresql_using="gist"),
         Index("idx_incidents_type", "incident_type"),
     )

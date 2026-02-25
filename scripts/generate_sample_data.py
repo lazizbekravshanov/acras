@@ -91,12 +91,11 @@ async def generate(count: int):
                     """
                     INSERT INTO incidents (
                         camera_id, incident_type, severity, severity_score, confidence, status,
-                        location, latitude, longitude, interstate, direction, lane_impact,
+                        latitude, longitude, interstate, direction, lane_impact,
                         vehicle_count, detected_at, confirmed_at, resolved_at,
                         weather_conditions, metadata, detection_frames
                     ) VALUES (
                         $1, $2, $3, $4, $5, $6,
-                        ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography,
                         $7, $8, $9, $10, $11, $12, $13, $14, $15,
                         $16::jsonb, '{}'::jsonb, '[]'::jsonb
                     )

@@ -6,7 +6,6 @@ Create Date: 2025-01-15
 """
 from typing import Sequence, Union
 
-import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
@@ -18,9 +17,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Enable PostGIS
-    op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
-
     # Cameras
     op.create_table(
         "cameras",
@@ -29,7 +25,6 @@ def upgrade() -> None:
         sa.Column("description", sa.Text),
         sa.Column("stream_url", sa.Text, nullable=False),
         sa.Column("stream_type", sa.String(20), nullable=False),
-        sa.Column("location", geoalchemy2.Geography("POINT", srid=4326), nullable=False),
         sa.Column("latitude", sa.Double, nullable=False),
         sa.Column("longitude", sa.Double, nullable=False),
         sa.Column("state_code", sa.String(2), nullable=False),
@@ -59,7 +54,6 @@ def upgrade() -> None:
         sa.Column("severity_score", sa.Double, nullable=False),
         sa.Column("confidence", sa.Double, nullable=False),
         sa.Column("status", sa.String(20), nullable=False, server_default="detected"),
-        sa.Column("location", geoalchemy2.Geography("POINT", srid=4326), nullable=False),
         sa.Column("latitude", sa.Double, nullable=False),
         sa.Column("longitude", sa.Double, nullable=False),
         sa.Column("interstate", sa.String(20), nullable=False),
@@ -163,4 +157,3 @@ def downgrade() -> None:
     op.drop_table("reports")
     op.drop_table("incidents")
     op.drop_table("cameras")
-    op.execute("DROP EXTENSION IF EXISTS postgis")
