@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from geoalchemy2.elements import WKTElement
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -112,7 +111,6 @@ async def create_incident(data: IncidentCreate, db: AsyncSession = Depends(get_d
         confidence=data.confidence,
         latitude=data.latitude,
         longitude=data.longitude,
-        location=WKTElement(f"POINT({data.longitude} {data.latitude})", srid=4326),
         interstate=data.interstate,
         direction=data.direction,
         lane_impact=data.lane_impact,
