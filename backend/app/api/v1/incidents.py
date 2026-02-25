@@ -1,7 +1,7 @@
 """Incident query and management endpoints."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -15,29 +15,7 @@ router = APIRouter()
 
 
 def _incident_to_response(incident: Incident) -> IncidentResponse:
-    return IncidentResponse(
-        id=incident.id,
-        camera_id=incident.camera_id,
-        incident_type=incident.incident_type,
-        severity=incident.severity,
-        severity_score=incident.severity_score,
-        confidence=incident.confidence,
-        status=incident.status,
-        latitude=incident.latitude,
-        longitude=incident.longitude,
-        interstate=incident.interstate,
-        direction=incident.direction,
-        lane_impact=incident.lane_impact,
-        vehicle_count=incident.vehicle_count,
-        detected_at=incident.detected_at,
-        confirmed_at=incident.confirmed_at,
-        resolved_at=incident.resolved_at,
-        thumbnail_url=incident.thumbnail_url,
-        weather_conditions=incident.weather_conditions,
-        detection_frames=incident.detection_frames,
-        created_at=incident.created_at,
-        updated_at=incident.updated_at,
-    )
+    return IncidentResponse.model_validate(incident)
 
 
 @router.get("", response_model=IncidentListResponse)
@@ -136,16 +114,27 @@ async def update_incident(incident_id: uuid.UUID, data: IncidentUpdate, db: Asyn
 
     update_data = data.model_dump(exclude_unset=True)
 
-    # Track state transitions
+    # Validate status transitions
     if "status" in update_data:
-        new_status = update_data["status"]
-        if new_status == "confirmed" and incident.confirmed_at is None:
-            incident.confirmed_at = datetime.utcnow()
-        elif new_status == "resolved" and incident.resolved_at is None:
-            incident.resolved_at = datetime.utcnow()
+        from app.services.incident_tracker import VALID_TRANSITIONS
 
+        new_status = update_data["status"]
+        allowed = VALID_TRANSITIONS.get(incident.status, set())
+        if new_status != incident.status and new_status not in allowed:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid status transition: {incident.status} -> {new_status}",
+            )
+        if new_status == "confirmed" and incident.confirmed_at is None:
+            incident.confirmed_at = datetime.now(UTC)
+        elif new_status == "resolved" and incident.resolved_at is None:
+            incident.resolved_at = datetime.now(UTC)
+
+    # Explicit field allowlist for setattr
+    updatable_fields = {"status", "severity", "severity_score", "confidence", "lane_impact", "vehicle_count"}
     for key, value in update_data.items():
-        setattr(incident, key, value)
+        if key in updatable_fields:
+            setattr(incident, key, value)
 
     await db.commit()
     await db.refresh(incident)

@@ -4,12 +4,13 @@ Handles RTSP, MJPEG, HLS, and HTTP image streams with automatic reconnection.
 Publishes extracted frames to Redis pub/sub for the detection pipeline.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
 
-import cv2
 import redis.asyncio as aioredis
 
 from app.config import settings
@@ -103,7 +104,11 @@ class StreamManager:
 
         while state.is_running:
             try:
-                cap = cv2.VideoCapture(state.stream_url)
+                import cv2 as _cv2
+
+                # Run blocking VideoCapture in executor to avoid blocking event loop
+                loop = asyncio.get_running_loop()
+                cap = await loop.run_in_executor(None, _cv2.VideoCapture, state.stream_url)
                 if not cap.isOpened():
                     raise ConnectionError(f"Cannot open stream: {state.stream_url}")
 
@@ -114,12 +119,12 @@ class StreamManager:
                 while state.is_running:
                     loop_start = time.monotonic()
 
-                    ret, frame = cap.read()
+                    ret, frame = await loop.run_in_executor(None, cap.read)
                     if not ret:
                         raise ConnectionError("Frame read failed")
 
                     # Encode frame as JPEG for Redis transport
-                    _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                    _, buffer = _cv2.imencode(".jpg", frame, [_cv2.IMWRITE_JPEG_QUALITY, 85])
                     frame_bytes = buffer.tobytes()
 
                     # Publish to Redis channel for this camera

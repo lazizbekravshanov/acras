@@ -5,6 +5,7 @@ Usage: python -m scripts.seed_cameras
 
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -15,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
 DATA_FILE = Path(__file__).parent.parent / "data" / "camera_feeds.json"
 
-DATABASE_URL = "postgresql://acras:acras@localhost:5433/acras"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://acras:acras@localhost:5433/acras")
 
 
 async def seed():

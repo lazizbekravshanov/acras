@@ -43,8 +43,8 @@ class Incident(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Relationships
     camera = relationship("Camera", back_populates="incidents")
-    reports = relationship("Report", back_populates="incident", lazy="selectin")
-    alerts = relationship("Alert", back_populates="incident", lazy="noload")
+    reports = relationship("Report", back_populates="incident", lazy="noload", cascade="all, delete-orphan")
+    alerts = relationship("Alert", back_populates="incident", lazy="noload", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_incidents_camera", "camera_id"),

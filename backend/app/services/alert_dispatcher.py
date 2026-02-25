@@ -24,6 +24,16 @@ class AlertDispatcher:
 
     def __init__(self):
         self._last_sent: dict[str, datetime] = {}  # recipient -> last sent time
+        self._http_client: httpx.AsyncClient | None = None
+
+    async def _get_http_client(self) -> httpx.AsyncClient:
+        if self._http_client is None or self._http_client.is_closed:
+            self._http_client = httpx.AsyncClient(timeout=10)
+        return self._http_client
+
+    async def close(self) -> None:
+        if self._http_client and not self._http_client.is_closed:
+            await self._http_client.close()
 
     async def dispatch(
         self,
@@ -123,12 +133,12 @@ class AlertDispatcher:
 
     async def _send_webhook(self, url: str, payload: dict, retries: int = 3) -> None:
         """POST JSON payload to a webhook URL with retry."""
+        client = await self._get_http_client()
         for attempt in range(retries):
             try:
-                async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.post(url, json=payload)
-                    response.raise_for_status()
-                    return
+                response = await client.post(url, json=payload)
+                response.raise_for_status()
+                return
             except Exception as e:
                 if attempt == retries - 1:
                     raise
@@ -154,7 +164,7 @@ class AlertDispatcher:
         msg.attach(MIMEText(text_body, "plain"))
 
         # Run SMTP in thread to avoid blocking
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._smtp_send, msg)
 
     def _smtp_send(self, msg: MIMEMultipart) -> None:
@@ -177,9 +187,9 @@ class AlertDispatcher:
             f"{incident.get('detected_at', 'unknown time')}"
         )
 
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
-                auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
-                data={"From": settings.TWILIO_FROM_NUMBER, "To": phone, "Body": body},
-            )
+        client = await self._get_http_client()
+        await client.post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
+            auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
+            data={"From": settings.TWILIO_FROM_NUMBER, "To": phone, "Body": body},
+        )

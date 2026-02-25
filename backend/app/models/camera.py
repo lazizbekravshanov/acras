@@ -34,8 +34,8 @@ class Camera(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
 
     # Relationships
-    incidents = relationship("Incident", back_populates="camera", lazy="selectin")
-    health_logs = relationship("CameraHealthLog", back_populates="camera", lazy="noload")
+    incidents = relationship("Incident", back_populates="camera", lazy="noload", cascade="all, delete-orphan")
+    health_logs = relationship("CameraHealthLog", back_populates="camera", lazy="noload", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_cameras_status", "status"),

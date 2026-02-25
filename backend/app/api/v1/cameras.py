@@ -21,28 +21,7 @@ router = APIRouter()
 
 def _camera_to_response(camera: Camera) -> CameraResponse:
     """Convert a Camera ORM object to a response schema."""
-    return CameraResponse(
-        id=camera.id,
-        name=camera.name,
-        description=camera.description,
-        stream_url=camera.stream_url,
-        stream_type=camera.stream_type,
-        latitude=camera.latitude,
-        longitude=camera.longitude,
-        state_code=camera.state_code,
-        interstate=camera.interstate,
-        direction=camera.direction,
-        mile_marker=camera.mile_marker,
-        status=camera.status,
-        last_frame_at=camera.last_frame_at,
-        fps_actual=camera.fps_actual,
-        resolution_width=camera.resolution_width,
-        resolution_height=camera.resolution_height,
-        source_agency=camera.source_agency,
-        metadata=camera.metadata_,
-        created_at=camera.created_at,
-        updated_at=camera.updated_at,
-    )
+    return CameraResponse.model_validate(camera)
 
 
 @router.get("", response_model=CameraListResponse)

@@ -5,6 +5,7 @@ Falls back gracefully if the service is unavailable.
 
 import logging
 import time
+from collections import OrderedDict
 from dataclasses import dataclass
 
 import httpx
@@ -13,9 +14,10 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# In-memory cache: (lat_round, lon_round) -> (timestamp, data)
-_cache: dict[tuple[float, float], tuple[float, dict]] = {}
+# LRU-style cache: (lat_round, lon_round) -> (timestamp, data)
+_cache: OrderedDict[tuple[float, float], tuple[float, dict]] = OrderedDict()
 CACHE_TTL = settings.WEATHER_CACHE_TTL_SECONDS
+CACHE_MAX_SIZE = settings.WEATHER_CACHE_MAX_SIZE
 
 
 @dataclass
@@ -95,6 +97,9 @@ async def get_weather(lat: float, lon: float) -> dict | None:
 
         result = weather.to_dict()
         _cache[cache_key] = (now, result)
+        # Evict oldest entries when exceeding max size
+        while len(_cache) > CACHE_MAX_SIZE:
+            _cache.popitem(last=False)
         return result
 
     except Exception as e:

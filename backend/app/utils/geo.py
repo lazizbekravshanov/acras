@@ -32,3 +32,14 @@ def point_wkt(lon: float, lat: float) -> str:
 def validate_coordinates(lat: float, lon: float) -> bool:
     """Check if coordinates are valid."""
     return -90 <= lat <= 90 and -180 <= lon <= 180
+
+
+def score_to_severity_level(score: float) -> str:
+    """Map a 0.0-1.0 severity score to a categorical level."""
+    if score < 0.25:
+        return "minor"
+    elif score < 0.5:
+        return "moderate"
+    elif score < 0.75:
+        return "severe"
+    return "critical"

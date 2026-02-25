@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy and install dependencies (layer caching)
 COPY backend/pyproject.toml .
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Copy backend code
 COPY backend/ .

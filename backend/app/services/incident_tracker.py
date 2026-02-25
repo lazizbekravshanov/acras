@@ -247,17 +247,12 @@ class IncidentTracker:
     @staticmethod
     def _approx_distance_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """Fast approximate distance in miles between two lat/lon points."""
-        # 1 degree latitude ~= 69 miles, 1 degree longitude ~= 54.6 miles (at US latitudes)
-        dlat = abs(lat1 - lat2) * 69.0
-        dlon = abs(lon1 - lon2) * 54.6
-        return (dlat**2 + dlon**2) ** 0.5
+        from app.utils.geo import approx_distance_miles
+
+        return approx_distance_miles(lat1, lon1, lat2, lon2)
 
     @staticmethod
     def _score_to_level(score: float) -> str:
-        if score < 0.25:
-            return "minor"
-        elif score < 0.5:
-            return "moderate"
-        elif score < 0.75:
-            return "severe"
-        return "critical"
+        from app.utils.geo import score_to_severity_level
+
+        return score_to_severity_level(score)

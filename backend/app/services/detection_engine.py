@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -43,7 +44,8 @@ class DetectionEngine:
         self._yolo_detector = None
         self._optical_flow = None
         self._crash_classifier = None
-        self._prev_frames: dict[str, np.ndarray] = {}  # For optical flow
+        self._prev_frames: OrderedDict[str, np.ndarray] = OrderedDict()
+        self._max_prev_frames = settings.MAX_CONCURRENT_CAMERAS
         self._crash_threshold = settings.CRASH_CONFIDENCE_THRESHOLD
         self._initialized = False
 
@@ -102,6 +104,9 @@ class DetectionEngine:
                 logger.error("Optical flow failed: %s", e)
 
         self._prev_frames[camera_id] = frame.copy()
+        # Evict oldest entries when exceeding max size
+        while len(self._prev_frames) > self._max_prev_frames:
+            self._prev_frames.popitem(last=False)
 
         # Stage 3: Crash classification
         crash_prob = 0.0
@@ -193,10 +198,6 @@ class DetectionEngine:
     @staticmethod
     def _score_to_level(score: float) -> str:
         """Map severity score to categorical level."""
-        if score < 0.25:
-            return "minor"
-        elif score < 0.5:
-            return "moderate"
-        elif score < 0.75:
-            return "severe"
-        return "critical"
+        from app.utils.geo import score_to_severity_level
+
+        return score_to_severity_level(score)

@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
@@ -17,8 +17,11 @@ from app.schemas.analytics import (
     TrendDataPoint,
     TrendResponse,
 )
+from app.services.analytics_engine import AnalyticsEngine
 
 router = APIRouter()
+
+_analytics = AnalyticsEngine()
 
 
 @router.get("/summary", response_model=SummaryResponse)
@@ -27,6 +30,7 @@ async def get_summary(db: AsyncSession = Depends(get_db)):
     now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
+    month_ago = now - timedelta(days=30)
 
     active_cameras = (
         await db.execute(select(func.count(Camera.id)).where(Camera.status == "active"))
@@ -52,11 +56,72 @@ async def get_summary(db: AsyncSession = Depends(get_db)):
         )
     ).scalar_one()
 
+    # Avg detection-to-confirmation time (last 30 days)
+    avg_detection_time = (
+        await db.execute(
+            select(
+                func.avg(
+                    extract("epoch", Incident.confirmed_at) - extract("epoch", Incident.detected_at)
+                )
+            ).where(
+                Incident.confirmed_at.is_not(None),
+                Incident.detected_at >= month_ago,
+            )
+        )
+    ).scalar_one()
+
+    # Avg resolution time in minutes (last 30 days)
+    avg_resolution_time = (
+        await db.execute(
+            select(
+                func.avg(
+                    (extract("epoch", Incident.resolved_at) - extract("epoch", Incident.detected_at)) / 60.0
+                )
+            ).where(
+                Incident.resolved_at.is_not(None),
+                Incident.detected_at >= month_ago,
+            )
+        )
+    ).scalar_one()
+
+    # False positive rate (last 30 days)
+    total_30d = (
+        await db.execute(
+            select(func.count(Incident.id)).where(Incident.detected_at >= month_ago)
+        )
+    ).scalar_one()
+
+    fp_30d = (
+        await db.execute(
+            select(func.count(Incident.id)).where(
+                Incident.detected_at >= month_ago,
+                Incident.status == "false_positive",
+            )
+        )
+    ).scalar_one()
+
+    fp_rate = round(fp_30d / total_30d, 3) if total_30d > 0 else None
+
+    # Top severity in last 7 days
+    top_severity_row = (
+        await db.execute(
+            select(Incident.severity, func.count(Incident.id).label("cnt"))
+            .where(Incident.detected_at >= week_start)
+            .group_by(Incident.severity)
+            .order_by(func.count(Incident.id).desc())
+            .limit(1)
+        )
+    ).first()
+
     return SummaryResponse(
         active_cameras=active_cameras,
         active_incidents=active_incidents,
         incidents_today=incidents_today,
         incidents_this_week=incidents_this_week,
+        avg_detection_time_seconds=round(avg_detection_time, 1) if avg_detection_time else None,
+        avg_resolution_time_minutes=round(avg_resolution_time, 1) if avg_resolution_time else None,
+        false_positive_rate=fp_rate,
+        top_severity=top_severity_row.severity if top_severity_row else None,
     )
 
 
@@ -74,15 +139,19 @@ async def get_heatmap(
     if not end_date:
         end_date = now
 
+    # Round coordinates to ~0.5 mile buckets for spatial clustering
+    lat_bucket = func.round(Incident.latitude * 100) / 100  # ~0.7 mile buckets
+    lon_bucket = func.round(Incident.longitude * 100) / 100
+
     query = select(
-        Incident.latitude,
-        Incident.longitude,
+        lat_bucket.label("latitude"),
+        lon_bucket.label("longitude"),
         func.count(Incident.id).label("incident_count"),
     ).where(
         Incident.detected_at >= start_date,
         Incident.detected_at <= end_date,
     ).group_by(
-        Incident.latitude, Incident.longitude
+        lat_bucket, lon_bucket
     )
 
     if severity:
@@ -94,8 +163,8 @@ async def get_heatmap(
     max_count = max((r.incident_count for r in rows), default=1)
     points = [
         HeatmapPoint(
-            latitude=r.latitude,
-            longitude=r.longitude,
+            latitude=float(r.latitude),
+            longitude=float(r.longitude),
             intensity=r.incident_count / max_count,
             incident_count=r.incident_count,
         )
@@ -169,31 +238,28 @@ async def get_risk_score(
         )
     ).scalar_one()
 
-    # Simple risk scoring based on incident density
-    risk_score = min(1.0, nearby_count / 20.0)
-    if risk_score < 0.25:
-        risk_level = "low"
-    elif risk_score < 0.5:
-        risk_level = "medium"
-    elif risk_score < 0.75:
-        risk_level = "high"
-    else:
-        risk_level = "critical"
+    # Fetch weather for context if available
+    weather_condition = None
+    try:
+        from app.services.weather_service import get_weather
+        weather = await get_weather(lat, lon)
+        if weather:
+            weather_condition = weather.get("condition")
+    except Exception:
+        pass
 
-    factors = []
-    if nearby_count > 0:
-        factors.append(f"{nearby_count} incidents in last 30 days")
-    now_hour = now.hour
-    if 7 <= now_hour <= 9 or 16 <= now_hour <= 18:
-        factors.append("rush_hour")
-        risk_score = min(1.0, risk_score * 1.3)
+    risk_score, risk_level, factors = _analytics.compute_risk_score(
+        historical_count=nearby_count,
+        hour=now.hour,
+        weather_condition=weather_condition,
+    )
 
     return RiskScoreResponse(
         latitude=lat,
         longitude=lon,
-        risk_score=round(risk_score, 3),
+        risk_score=risk_score,
         risk_level=risk_level,
         factors=factors,
         historical_incidents_30d=nearby_count,
-        prediction_confidence=0.7,
+        prediction_confidence=0.7 + min(nearby_count / 100, 0.25),
     )

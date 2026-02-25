@@ -7,6 +7,7 @@ Usage: python -m scripts.generate_sample_data [--count 1000]
 import argparse
 import asyncio
 import json
+import os
 import random
 import sys
 import uuid
@@ -17,7 +18,7 @@ import asyncpg
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
-DATABASE_URL = "postgresql://acras:acras@localhost:5433/acras"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://acras:acras@localhost:5433/acras")
 
 INCIDENT_TYPES = ["crash", "stall", "debris", "fire", "wrong_way", "weather_hazard"]
 SEVERITIES = ["minor", "moderate", "severe", "critical"]

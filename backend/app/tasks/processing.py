@@ -2,9 +2,6 @@
 
 import logging
 
-import cv2
-import numpy as np
-
 from app.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -44,6 +41,9 @@ def process_frame(camera_id: str, frame_bytes: bytes, camera_info: dict) -> dict
     """
     engine = _get_detection_engine()
     tracker = _get_incident_tracker()
+
+    import cv2
+    import numpy as np
 
     # Decode frame
     nparr = np.frombuffer(frame_bytes, np.uint8)
@@ -96,7 +96,65 @@ def check_auto_resolve() -> int:
 @celery_app.task(name="app.tasks.processing.camera_health_check")
 def camera_health_check() -> dict:
     """Periodic task: check camera stream health."""
-    # This would check each active stream's status
-    # For now, return a placeholder
-    logger.info("Camera health check completed")
-    return {"checked": 0, "healthy": 0, "degraded": 0, "offline": 0}
+    import asyncio
+
+    return asyncio.new_event_loop().run_until_complete(_check_camera_health())
+
+
+async def _check_camera_health() -> dict:
+    """Async implementation of camera health check."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+    from app.config import settings
+    from app.models.camera import Camera, CameraHealthLog
+
+    engine = create_async_engine(settings.async_database_url, echo=False)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    stats = {"checked": 0, "healthy": 0, "degraded": 0, "offline": 0}
+
+    try:
+        async with async_session() as db:
+            cameras = (await db.execute(select(Camera))).scalars().all()
+
+            now = datetime.now(UTC)
+            stale_threshold = now - timedelta(minutes=5)
+
+            for camera in cameras:
+                stats["checked"] += 1
+
+                if camera.status == "inactive" or camera.status == "maintenance":
+                    status = "offline"
+                elif camera.last_frame_at and camera.last_frame_at > stale_threshold:
+                    status = "healthy"
+                elif camera.last_frame_at and camera.last_frame_at > now - timedelta(minutes=15):
+                    status = "degraded"
+                else:
+                    status = "offline"
+
+                stats[status] = stats.get(status, 0) + 1
+
+                # Log health check
+                health_log = CameraHealthLog(
+                    camera_id=camera.id,
+                    status=status,
+                    fps=camera.fps_actual,
+                )
+                db.add(health_log)
+
+                # Update camera status if it changed
+                if status == "offline" and camera.status == "active":
+                    camera.status = "error"
+                elif status == "healthy" and camera.status == "error":
+                    camera.status = "active"
+
+            await db.commit()
+
+        logger.info("Camera health check: %s", stats)
+    finally:
+        await engine.dispose()
+
+    return stats

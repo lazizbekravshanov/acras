@@ -37,8 +37,8 @@ class Settings(BaseSettings):
     FRAME_BUFFER_SIZE: int = 100
 
     # Weather
-    OPENWEATHER_API_KEY: str = ""
     WEATHER_CACHE_TTL_SECONDS: int = 600
+    WEATHER_CACHE_MAX_SIZE: int = 1000
 
     # Alerts
     SMTP_HOST: str = "smtp.gmail.com"
@@ -48,10 +48,6 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_FROM_NUMBER: str = ""
-
-    # Frontend
-    NEXT_PUBLIC_API_URL: str = "http://localhost:8000"
-    NEXT_PUBLIC_WS_URL: str = "ws://localhost:8000/api/v1/ws"
 
     # Monitoring
     PROMETHEUS_ENABLED: bool = True
