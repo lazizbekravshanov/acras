@@ -64,19 +64,21 @@ def create_app() -> FastAPI:
 
     @app.get("/ready", tags=["system"])
     async def ready():
-        from app.core.events import async_session_factory, redis_client
+        from sqlalchemy import text
+
+        from app.core import events
 
         checks = {"database": False, "redis": False}
         try:
-            if async_session_factory:
-                async with async_session_factory() as session:
-                    await session.execute("SELECT 1")
+            if events.async_session_factory:
+                async with events.async_session_factory() as session:
+                    await session.execute(text("SELECT 1"))
                     checks["database"] = True
         except Exception:
             pass
         try:
-            if redis_client:
-                await redis_client.ping()
+            if events.redis_client:
+                await events.redis_client.ping()
                 checks["redis"] = True
         except Exception:
             pass

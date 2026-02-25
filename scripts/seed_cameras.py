@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
 DATA_FILE = Path(__file__).parent.parent / "data" / "camera_feeds.json"
 
-DATABASE_URL = "postgresql://acras:acras@localhost:5432/acras"
+DATABASE_URL = "postgresql://acras:acras@localhost:5433/acras"
 
 
 async def seed():

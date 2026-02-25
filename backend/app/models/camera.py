@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 
 from geoalchemy2 import Geography
-from sqlalchemy import BigInteger, DateTime, Double, Index, Integer, String, Text, func
+from sqlalchemy import BigInteger, DateTime, Double, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -52,7 +52,7 @@ class CameraHealthLog(Base):
     __tablename__ = "camera_health_log"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    camera_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    camera_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("cameras.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     fps: Mapped[float | None] = mapped_column(Double)
     latency_ms: Mapped[float | None] = mapped_column(Double)

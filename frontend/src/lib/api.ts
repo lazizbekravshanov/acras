@@ -36,6 +36,7 @@ class ApiClient {
     const res = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
+        "X-API-Key": process.env.NEXT_PUBLIC_API_KEY || "dev-secret-key-change-in-production",
         ...options.headers,
       },
       ...options,

@@ -17,7 +17,7 @@ import asyncpg
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
-DATABASE_URL = "postgresql://acras:acras@localhost:5432/acras"
+DATABASE_URL = "postgresql://acras:acras@localhost:5433/acras"
 
 INCIDENT_TYPES = ["crash", "stall", "debris", "fire", "wrong_way", "weather_hazard"]
 SEVERITIES = ["minor", "moderate", "severe", "critical"]

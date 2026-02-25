@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,7 +15,7 @@ class Report(Base, UUIDPrimaryKeyMixin):
 
     __tablename__ = "reports"
 
-    incident_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    incident_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("incidents.id"), nullable=False)
     report_type: Mapped[str] = mapped_column(String(20), nullable=False)  # automated, manual, updated
     structured_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     narrative: Mapped[str] = mapped_column(Text, nullable=False)

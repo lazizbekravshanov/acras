@@ -1,17 +1,22 @@
 """Application configuration using Pydantic Settings."""
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
+
+# Resolve .env from project root (one level above backend/)
+_env_file = Path(__file__).resolve().parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
     """All application settings, loaded from environment variables."""
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://acras:acras@postgres:5432/acras"
-    DATABASE_SYNC_URL: str = "postgresql://acras:acras@postgres:5432/acras"
+    DATABASE_URL: str = "postgresql+asyncpg://acras:acras@localhost:5433/acras"
+    DATABASE_SYNC_URL: str = "postgresql://acras:acras@localhost:5433/acras"
 
     # Redis
-    REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     # API
     API_HOST: str = "0.0.0.0"
@@ -57,7 +62,7 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": str(_env_file), "env_file_encoding": "utf-8"}
 
 
 settings = Settings()

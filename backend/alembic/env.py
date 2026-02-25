@@ -3,6 +3,10 @@
 import os
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+
 from alembic import context
 from sqlalchemy import create_engine, pool
 

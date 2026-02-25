@@ -46,7 +46,6 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
-    op.create_index("idx_cameras_location", "cameras", ["location"], postgresql_using="gist")
     op.create_index("idx_cameras_status", "cameras", ["status"])
     op.create_index("idx_cameras_interstate", "cameras", ["interstate"])
 
@@ -81,7 +80,6 @@ def upgrade() -> None:
     op.create_index("idx_incidents_status", "incidents", ["status"])
     op.create_index("idx_incidents_severity", "incidents", ["severity"])
     op.create_index("idx_incidents_detected_at", "incidents", ["detected_at"])
-    op.create_index("idx_incidents_location", "incidents", ["location"], postgresql_using="gist")
     op.create_index("idx_incidents_type", "incidents", ["incident_type"])
 
     # Reports

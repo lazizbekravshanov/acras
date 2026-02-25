@@ -115,7 +115,7 @@ async def get_heatmap(
 @router.get("/trends", response_model=TrendResponse)
 async def get_trends(
     db: AsyncSession = Depends(get_db),
-    period: str = Query("daily", regex="^(hourly|daily|weekly)$"),
+    period: str = Query("daily", pattern="^(hourly|daily|weekly)$"),
     days: int = Query(30, ge=1, le=365),
 ):
     """Get incident trend data for time-series charts."""
